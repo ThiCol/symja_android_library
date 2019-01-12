@@ -13,6 +13,14 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.github.haifengl</groupId>
+			<artifactId>smile-math</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.haifengl</groupId>
+			<artifactId>smile-plot</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
 		</dependency>
@@ -87,7 +95,7 @@
 		<dependency>
 			<groupId>org.logicng</groupId>
 			<artifactId>logicng</artifactId>
-		</dependency> 
+		</dependency>
 	</dependencies>
 
 	<build>

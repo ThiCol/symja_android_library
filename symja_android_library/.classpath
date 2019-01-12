@@ -26,5 +26,10 @@
 	<classpathentry kind="lib" path="lib/commonmark-0.12.1.jar"/>
 	<classpathentry kind="lib" path="lib/logicng-1.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.25.jar"/>
+	<classpathentry kind="lib" path="lib/smile-math-1.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/smile-plot-1.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/swingx-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/smile-core-1.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/smile-data-1.5.2.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

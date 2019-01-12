@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import org.apfloat.ApcomplexMath;
 import org.apfloat.ApfloatMath;
 import org.hipparchus.distribution.RealDistribution;
+import org.hipparchus.distribution.continuous.LaplaceDistribution;
 import org.hipparchus.linear.FieldMatrix;
 import org.hipparchus.linear.RealMatrix;
 import org.hipparchus.random.RandomDataGenerator;
@@ -41,6 +42,7 @@ import org.matheclipse.core.interfaces.IInteger;
 import org.matheclipse.core.interfaces.INum;
 import org.matheclipse.core.interfaces.IRational;
 import org.matheclipse.core.interfaces.ISignedNumber;
+import org.matheclipse.core.interfaces.IStringX;
 import org.matheclipse.core.interfaces.ISymbol;
 import org.matheclipse.core.reflection.system.rules.QuantileRules;
 import org.matheclipse.core.reflection.system.rules.StandardDeviationRules;
@@ -49,6 +51,9 @@ import org.uncommons.maths.random.DiscreteUniformGenerator;
 import org.uncommons.maths.random.ExponentialGenerator;
 import org.uncommons.maths.random.GaussianGenerator;
 import org.uncommons.maths.random.PoissonGenerator;
+
+import smile.stat.distribution.Distribution;
+import smile.stat.hypothesis.KSTest;
 
 public class StatisticsFunctions {
 	private static final double NEXTDOWNONE = Math.nextDown(1.0);
@@ -76,7 +81,7 @@ public class StatisticsFunctions {
 		F.GeometricDistribution.setEvaluator(new GeometricDistribution());
 		F.GumbelDistribution.setEvaluator(new GumbelDistribution());
 		F.HypergeometricDistribution.setEvaluator(new HypergeometricDistribution());
-		// F.KolmogorovSmirnovTest.setEvaluator(new KolmogorovSmirnovTest());
+		F.KolmogorovSmirnovTest.setEvaluator(new KolmogorovSmirnovTest());
 		F.Kurtosis.setEvaluator(new Kurtosis());
 		F.LogNormalDistribution.setEvaluator(new LogNormalDistribution());
 		F.Mean.setEvaluator(new Mean());
@@ -1806,7 +1811,7 @@ public class StatisticsFunctions {
 			IASTAppendable v1 = F.PlusAlloc(arg1.size());
 			v1.appendArgs(arg1.size(),
 					i -> F.Times(F.CN1, num1.setAtClone(i, F.Times(factor, arg1.get(i))), F.Conjugate(arg2.get(i))));
-			return F.Divide(v1, F.integer(((long)arg1.argSize()) * (((long)arg1.size()) - 2L)));
+			return F.Divide(v1, F.integer(((long) arg1.argSize()) * (((long) arg1.size()) - 2L)));
 		}
 
 		@Override
@@ -2263,53 +2268,80 @@ public class StatisticsFunctions {
 
 	}
 
-	// private final static class KolmogorovSmirnovTest extends AbstractFunctionEvaluator {
-	//
-	// @Override
-	// public IExpr evaluate(final IAST ast, EvalEngine engine) {
-	// if (ast.isAST1()) {
-	// double[] arg1Values = ast.arg1().toDoubleVector();
-	// org.hipparchus.stat.inference.KolmogorovSmirnovTest test = new
-	// org.hipparchus.stat.inference.KolmogorovSmirnovTest();
-	// double d = test.kolmogorovSmirnovTest(arg1Values, arg1Values);
-	// return F.num(d);
-	//
-	// } else if (ast.isAST2()) {
-	// int len1 = ast.arg1().isVector();
-	// if (len1 > 0) {
-	// double[] arg1Values = ast.arg1().toDoubleVector();
-	// if (arg1Values != null) {
-	// int len2 = ast.arg2().isVector();
-	// if (len2 > 0) {
-	// double[] arg2Values = ast.arg2().toDoubleVector();
-	// if (arg2Values != null) {
-	// org.hipparchus.stat.inference.KolmogorovSmirnovTest test = new
-	// org.hipparchus.stat.inference.KolmogorovSmirnovTest();
-	// double d = test.kolmogorovSmirnovTest(arg1Values, arg2Values);
-	// return F.num(d);
-	// }
-	// return F.NIL;
-	// }
-	// IExpr head = ast.arg2().head();
-	// if (head instanceof IBuiltInSymbol) {
-	// IEvaluator evaluator = ((IBuiltInSymbol) head).getEvaluator();
-	// if (evaluator instanceof IDistribution) {
-	// RealDistribution dist = ((IDistribution) evaluator).dist();
-	// if (dist != null) {
-	// org.hipparchus.stat.inference.KolmogorovSmirnovTest test = new
-	// org.hipparchus.stat.inference.KolmogorovSmirnovTest();
-	// double d = test.kolmogorovSmirnovTest(dist, arg1Values);
-	// return F.num(d);
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	// return F.NIL;
-	// }
-	//
-	// }
+	private final static class KolmogorovSmirnovTest extends AbstractFunctionEvaluator {
+
+		@Override
+		public IExpr evaluate(final IAST ast, EvalEngine engine) {
+			if (ast.isAST1()) {
+				int len1 = ast.arg1().isVector();
+				if (len1 > 0) {
+					double[] arg1Values = ast.arg1().toDoubleVector();
+					// Distribution dist = new smile.stat.distribution.ExponentialDistribution(0.5);
+					Distribution dist = new smile.stat.distribution.GaussianDistribution(0.0, 1.0);
+					KSTest result = KSTest.test(arg1Values, dist);
+					return resultKSTest(result, 0);
+				}
+				return F.NIL;
+
+			} else if (ast.size() == 3 || ast.size() == 4) {
+				int property = 0;
+				if (ast.size() == 4) {
+					IExpr arg3 = ast.arg3();
+					if (!arg3.isString()) {
+						return F.NIL;
+					}
+					IStringX str = (IStringX) arg3;
+					if (str.toString().equals("TestData")) {
+						property = 1;
+					} else {
+						return F.NIL;
+					}
+				}
+				int len1 = ast.arg1().isVector();
+				if (len1 > 0) {
+
+					double[] arg1Values = ast.arg1().toDoubleVector();
+					if (arg1Values != null) {
+						int len2 = ast.arg2().isVector();
+						if (len2 > 0) {
+							double[] arg2Values = ast.arg2().toDoubleVector();
+							if (arg2Values != null) {
+								KSTest result = KSTest.test(arg1Values, arg2Values);
+								return resultKSTest(result, property);
+							}
+							return F.NIL;
+						}
+						IExpr head = ast.arg2().head();
+						if (head instanceof IBuiltInSymbol) {
+
+							IEvaluator evaluator = ((IBuiltInSymbol) head).getEvaluator();
+							if (evaluator instanceof IDistribution) {
+								// TODO determine correct distribution
+//								Distribution dist = new smile.stat.distribution.ExponentialDistribution(0.5);
+								Distribution dist = new smile.stat.distribution.GaussianDistribution(0.0, 1.0);
+								if (dist != null) {
+									KSTest result = KSTest.test(arg1Values, dist);
+									return resultKSTest(result, property);
+								}
+							}
+						}
+					}
+				}
+			}
+			return F.NIL;
+		}
+
+		private IExpr resultKSTest(KSTest result, int property) {
+			switch (property) {
+			case 0:
+				return F.num(result.pvalue);
+			case 1:
+				return new ASTRealVector(new double[] { result.d, result.pvalue }, false);
+			}
+			return F.NIL;
+		}
+
+	}
 
 	/**
 	 * <pre>
